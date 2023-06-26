@@ -1,0 +1,205 @@
+
+
+UPDATE tabela1 SET quantidade = quantidade + (SELECT carga FROM tabela2) WHERE <condição>;
+
+UPDATE produto SET quantidade = quantidade + 
+(SELECT quantidade_recebida FROM lote where id_lote = 
+ (select id_lote from controle_produto order by id_controle_produto desc limit 1))  
+ WHERE id_produto = (select id_produto from controle_produto order by id_controle_produto desc limit 1);
+
+
+
+select * from lote;
+select * from produto;
+
+select * from plano_cartao;
+select * from funcionario;
+select * from cliente_cartao_super_mercado; 
+select * from jornada;
+select * from caixa;
+select * from venda;
+select * from produto;
+select * from itens_venda;
+select * from pagamento;
+select * from controle_produto;
+select * from nota_fiscal;
+
+
+------------------------
+CREATE INDEX indice_codigo ON produto (codigo);
+CREATE INDEX lote_produto ON lote (data_compra);	
+---------------------------------
+CREATE VIEW marcas_mais_vendidas AS
+SELECT p.marca, COUNT(*) AS quantidade
+FROM controle_produto as c join produto as p on  c.id_produto = p.id_produto join 
+itens_venda as i on i.id_controle_produto = c.id_controle_produto
+GROUP BY p.marca
+ORDER BY quantidade DESC
+LIMIT 1;
+select * from marcas_mais_vendidas;
+---------------------------------
+CREATE OR REPLACE FUNCTION atualizar_quantidade_produto()
+RETURNS VOID AS
+$$
+BEGIN
+  UPDATE produto
+  SET quantidade = quantidade + (
+    SELECT quantidade_recebida
+    FROM lote
+    WHERE id_lote = (
+      SELECT id_lote
+      FROM controle_produto
+      ORDER BY id_controle_produto DESC
+      LIMIT 1
+    )
+  )
+  WHERE id_produto = (
+    SELECT id_produto
+    FROM controle_produto
+    ORDER BY id_controle_produto DESC
+    LIMIT 1
+  );
+END;
+$$
+LANGUAGE PLpgSQL;
+------------------------------
+CREATE OR REPLACE FUNCTION DESTRUIR_CAIXA(id integer, quantidade_caixas integer)
+RETURNS INTEGER AS
+$$
+DECLARE
+    quantidade int;
+BEGIN
+
+    select quantidade_unidade into quantidade from produto where id_produto = id;
+    RETURN quantidade * quantidade_caixas;
+END; 
+$$
+LANGUAGE PLPGSQL;
+--------------------------------------------------
+
+CREATE OR REPLACE PROCEDURE procedure_abrir_caixa(id INTEGER, id_quantidade_caixas INTEGER,
+												  produto_atualizar INTEGER)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+	existe_produto INT;
+	variavel INT;
+	resultado_function INT;
+
+BEGIN
+	-- Chamada da função DESTRUIR_CAIXA
+	SELECT DESTRUIR_CAIXA(id, id_quantidade_caixas) INTO resultado_function;
+
+	 	select quantidade_unidade * quantidade into existe_produto from produto where id_produto = id;
+	  
+
+	-- Atualizações dos produtos
+	UPDATE produto SET quantidade = quantidade + resultado_function WHERE id_produto = produto_atualizar;
+	UPDATE produto SET quantidade = quantidade - id_quantidade_caixas WHERE id_produto = id;
+	RAISE NOTICE'%', resultado_function;
+	 RAISE NOTICE '%',existe_produto;
+	
+
+	IF resultado_function > existe_produto THEN
+	
+		RAISE EXCEPTION 'Erro ao atualizar o produto ' ;
+		ROLLBACK;
+	ELSE
+	
+		COMMIT;
+	END IF;
+END;
+$$;
+call procedure_abrir_caixa(7,1,6);
+
+------------------------------------------
+
+	
+CREATE OR REPLACE FUNCTION gerar_nota(id integer)
+RETURNS void AS
+$$
+BEGIN
+
+INSERT INTO nota_fiscal (cod_nota, emissao, cpf, valor_total, id_venda, id_jornada)
+VALUES (random(), NOW(), null,
+(select sum(valor) 
+from  controle_produto as c join 
+produto as p on  c.id_produto = p.id_produto join 
+itens_venda as i on i.id_controle_produto = c.id_controle_produto join
+ venda   on venda.id_venda = i.id_venda 
+ where venda.id_venda = id),
+id, (select id_jornada from venda  where venda.id_venda = id));
+END; 
+$$
+LANGUAGE PLPGSQL;
+-----------------------------------------
+------------------
+CREATE OR REPLACE PROCEDURE verificar_venda(parametro_id_venda INT)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    variavel RECORD;
+    valor_pago DECIMAL(11,2);
+    total DECIMAL(11,2);
+BEGIN
+    -- Obter o valor total pago
+    SELECT valor_total INTO valor_pago FROM pagamento where id_venda = parametro_id_venda;
+
+    -- Obter o valor total dos produtos vendidos na venda
+    SELECT SUM(p.valor) INTO total
+    FROM controle_produto AS c
+    JOIN produto AS p ON c.id_produto = p.id_produto
+    JOIN itens_venda AS i ON i.id_controle_produto = c.id_controle_produto
+    WHERE i.id_venda = parametro_id_venda;
+
+    -- Atualizar a quantidade de produtos vendidos e verificar o valor pago
+    FOR variavel IN
+        SELECT c.id_produto
+        FROM venda AS v
+        JOIN itens_venda AS i ON v.id_venda = i.id_venda
+        JOIN controle_produto AS c ON i.id_controle_produto = c.id_controle_produto
+        WHERE v.id_venda = parametro_id_venda
+    LOOP
+        UPDATE produto
+        SET quantidade = quantidade - 1
+        WHERE id_produto = variavel.id_produto;
+
+        -- Exemplo de exibição do valor do campo
+        RAISE NOTICE 'ID do produto: %', variavel.id_produto;
+    END LOOP;
+
+    -- Verificar se o valor pago é suficiente
+    IF valor_pago < total THEN
+        RAISE EXCEPTION 'Valor insuficiente. Você pagou %. É necessário pagar %.', valor_pago, total;
+        ROLLBACK;
+    ELSE
+	perform gerar_nota(parametro_id_venda);
+        COMMIT;
+		
+    END IF;
+
+END;
+$$;
+----------------------------
+CREATE OR REPLACE FUNCTION fechamento(id_da_jornada integer)
+RETURNS void AS
+$$
+DECLARE
+    fechamento_jornada decimal(11,2);
+BEGIN
+ SELECT SUM(p.valor) into fechamento_jornada
+    FROM controle_produto AS c
+    JOIN produto AS p ON c.id_produto = p.id_produto
+    JOIN itens_venda AS i ON i.id_controle_produto = c.id_controle_produto join venda as v on v.id_venda = i.id_venda
+    WHERE v.id_jornada = id_da_jornada;
+	update jornada set valor_final = fechamento_jornada where id_jornada = id_da_jornada;
+   
+END; 
+$$
+LANGUAGE PLPGSQL;
+
+
+
+
+
+

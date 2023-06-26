@@ -1,0 +1,385 @@
+INSERT INTO super_mercado (nome, cnpj, email)
+VALUES ('Supermercado Rossi', '123456789', 'supermercadoRossi@example.com');
+
+INSERT INTO super_mercado (nome, cnpj, email)
+VALUES ('Supermercado Veram', '987654321', 'supermercadoVeram@example.com');
+
+INSERT INTO super_mercado (nome, cnpj, email)
+VALUES ('Supermercado Extra', '654321987', 'supermercadoExtra@example.com');
+
+INSERT INTO endereco (rua, numero, cep, cidade, uf, id_super_mercado)
+VALUES ('Rua A', '123', 12345, 'São paulo', 'SP', 1);
+
+INSERT INTO endereco (rua, numero, cep, cidade, uf, id_super_mercado)
+VALUES ('Rua B', '456', 54321, 'Rio de janeiro', 'SP', 2);
+
+INSERT INTO endereco (rua, numero, cep, cidade, uf, id_super_mercado)
+VALUES ('Rua C', '789', 98765, 'Sorocaba', 'SP', 3);
+
+INSERT INTO produto (tipo, marca, codigo, valor, quantidade_unidade, quantidade, id_super_mercado)
+VALUES ('cha', 'mate', '2333xj', 4.99, 1, 400, 2);
+
+INSERT INTO produto (tipo, marca, codigo, valor, quantidade_unidade, quantidade, id_super_mercado)
+VALUES ('batata frita', 'chetos ', 'COD002', 8.99, 1, 80, 2);
+
+INSERT INTO produto (tipo, marca, codigo, valor, quantidade_unidade, quantidade, id_super_mercado)
+VALUES ('cerveja', 'skol', 'COD003', 2.49, 1, 20, 2);
+
+INSERT INTO produto (tipo, marca, codigo, valor, quantidade_unidade, quantidade, id_super_mercado)
+VALUES ('caixas de skol', 'skol', 'COD004', 40.00, 12, 18, 2);
+
+INSERT INTO produto (tipo, marca, codigo, valor, quantidade_unidade, quantidade, id_super_mercado)
+VALUES ('canetas', 'Marca E', 'COD005', 20.00, 25, 25, 2);
+
+INSERT INTO produto (tipo, marca, codigo, valor, quantidade_unidade, quantidade, id_super_mercado)
+VALUES ('bala', 'fini', 'COD006', 9.99, 10, 30, 2);
+
+INSERT INTO lote (data_compra, quantidade_recebida)
+VALUES ('2023-01-15', 20);
+insert into controle_produto(id_lote,id_produto) values
+(3,7);
+select atualizar_quantidade_produto();
+
+INSERT INTO lote (data_compra, quantidade_recebida)
+VALUES ('2023-02-01', 150);
+
+INSERT INTO lote (data_compra, quantidade_recebida)
+VALUES ('2023-03-01', 200);
+
+INSERT INTO lote (data_compra, quantidade_recebida)
+VALUES ('2023-02-28', 200);
+
+INSERT INTO lote (data_compra, quantidade_recebida)
+VALUES ('2023-03-10', 150);
+
+select * from lote;
+INSERT INTO plano_cartao (limite, tempo_de_pagamento, parcelas_maximas, descricao, id_super_mercado)
+VALUES (5000.00, 30, 12, 'Plano A', 1);
+INSERT INTO plano_cartao (limite, tempo_de_pagamento, parcelas_maximas, descricao, id_super_mercado)
+VALUES (1000.00, 30, 8, 'Plano b', 1);
+INSERT INTO cliente (nome, cpf, data_nascimento)
+VALUES ('joao vitor', '123456789', '1990-01-01');
+
+INSERT INTO cliente (nome, cpf, data_nascimento)
+VALUES ('roger', '987654321', '1995-02-01');
+
+INSERT INTO cliente (nome, cpf, data_nascimento)
+VALUES ('caio', '654321987', '2000-03-01');
+
+INSERT INTO cliente_cartao_super_mercado (numero, bandeira, id_plano_cartao, id_cliente)
+VALUES ('1111222233334444', 'Visa', 1, 1);
+
+INSERT INTO funcionario (cpf, numero_carteira_trabalho, id_super_mercado)
+VALUES ('111111111', 'CT111', 1);
+
+INSERT INTO funcionario (cpf, numero_carteira_trabalho, id_super_mercado)
+VALUES ('222222222', 'CT222', 2);
+
+INSERT INTO caixa (id_caixa, numero, super_mercado_id_super_mercado, tipo_caixa, status)
+VALUES (1, '001', 1, 'preferencial', 1);
+
+INSERT INTO caixa (id_caixa, numero, super_mercado_id_super_mercado, tipo_caixa, status)
+VALUES (2, '002', 1, 'comum', 0);
+
+
+
+INSERT INTO jornada (id_funcionario, id_caixa, horario_abertura, horario_fechamento, valor_inicial, valor_final)
+VALUES (1, 1, '2023-01-01 08:00:00', '2023-01-01 17:00:00', 100.00, 950.00);
+
+INSERT INTO venda (id_cliente, id_jornada, data_hora)
+VALUES (1, 2, '2023-01-01 10:30:00');
+
+INSERT INTO itens_venda (id_venda, id_controle_produto)
+VALUES (2, 2);
+
+INSERT INTO itens_venda (id_venda, id_controle_produto)
+VALUES (2, 2);
+
+INSERT INTO pagamento (forma_pagamento, valor_total, id_compra, id_cartao_super_mercado)
+VALUES ('Dinheiro',(select sum(valor) 
+from controle_produto as c join produto as p on  c.id_produto = p.id_produto join 
+itens_venda as i on i.id_controle_produto = c.id_controle_produto), 2, NULL);
+
+
+
+INSERT INTO nota_fiscal (cod_nota, emissao, cpf, valor_total, id_venda, id_jornada)
+VALUES ('NF123', '2023-01-01', '123456789',(select sum(valor) 
+from controle_produto as c join produto as p on  c.id_produto = p.id_produto join 
+itens_venda as i on i.id_controle_produto = c.id_controle_produto),  2, 2);
+
+
+-------------------------------------------------------------------------------------------------------------------
+versao 2
+
+INSERT INTO super_mercado (nome, cnpj, email)
+VALUES ('Supermercado A', '123456789', 'supermercadoa@example.com');
+
+INSERT INTO endereco (rua, numero, cep, cidade, uf, id_super_mercado)
+VALUES ('Rua Exemplo', '123', 12345, 'SOROCABA', 'SP', 1);
+
+-- Insert 1
+INSERT INTO lote (data_compra, quantidade_recebida)
+VALUES ('2023-01-01', 150);
+
+-- Insert 2
+INSERT INTO lote (data_compra, quantidade_recebida)
+VALUES ('2023-02-05', 200);
+
+-- Insert 3
+INSERT INTO lote (data_compra, quantidade_recebida)
+VALUES ('2023-03-10', 250);
+
+-- Insert 4
+INSERT INTO lote (data_compra, quantidade_recebida)
+VALUES ('2023-04-15', 180);
+
+-- Insert 5
+INSERT INTO lote (data_compra, quantidade_recebida)
+VALUES ('2023-05-20', 220);
+---------------------------------------------------------------------
+
+-- Insert 1
+INSERT INTO produto (nome, marca, codigo, valor, quantidade_unidade, quantidade, id_super_mercado)
+VALUES ('Arroz', 'Tio João', 'ARZ123', 10.99, 1, 50, 1);
+
+-- Insert 2
+INSERT INTO produto (nome, marca, codigo, valor, quantidade_unidade, quantidade, id_super_mercado)
+VALUES ('Feijão', 'Camil', 'FEI456', 5.99, 1, 40, 1);
+
+-- Insert 3
+INSERT INTO produto (nome, marca, codigo, valor, quantidade_unidade, quantidade, id_super_mercado)
+VALUES ('Macarrão', 'Piraquê', 'MAC789', 3.99, 1, 60, 1);
+
+-- Insert 4
+INSERT INTO produto (nome, marca, codigo, valor, quantidade_unidade, quantidade, id_super_mercado)
+VALUES ('Leite', 'Nestlé', 'LEI234', 2.99, 1, 35, 1);
+
+-- Insert 5
+INSERT INTO produto (nome, marca, codigo, valor, quantidade_unidade, quantidade, id_super_mercado)
+VALUES ('Biscoito', 'Oreo', 'BIS567', 4.49, 1, 45, 1);
+
+-- Insert 6
+INSERT INTO produto (nome, marca, codigo, valor, quantidade_unidade, quantidade, id_super_mercado)
+VALUES ('Iogurte', 'Danone', 'IOG890', 1.99, 1, 55, 1);
+
+-- Insert 7
+INSERT INTO produto (nome, marca, codigo, valor, quantidade_unidade, quantidade, id_super_mercado)
+VALUES ('Azeite', 'Borges', 'AZE123', 7.99, 1, 30, 1);
+
+-- Insert 8
+INSERT INTO produto (nome, marca, codigo, valor, quantidade_unidade, quantidade, id_super_mercado)
+VALUES ('Café', '3 Corações', 'CAF456', 8.49, 1, 70, 1);
+
+-- Insert 9
+INSERT INTO produto (nome, marca, codigo, valor, quantidade_unidade, quantidade, id_super_mercado)
+VALUES ('Açúcar', 'União', 'ACU789', 3.49, 1, 50, 1);
+
+-- Insert 10
+INSERT INTO produto (nome, marca, codigo, valor, quantidade_unidade, quantidade, id_super_mercado)
+VALUES ('Molho de Tomate', 'Quero', 'MOL012', 2.79, 1, 40, 1);
+
+-- Insert 11
+INSERT INTO produto (nome, marca, codigo, valor, quantidade_unidade, quantidade, id_super_mercado)
+VALUES ('Cerveja', 'Skol', 'CER123', 3.99, 12, 120, 1);
+
+-- Insert 12
+INSERT INTO produto (nome, marca, codigo, valor, quantidade_unidade, quantidade, id_super_mercado)
+VALUES ('Refrigerante', 'Coca-Cola', 'REF456', 4.49, 6, 60, 1);
+
+-- Insert 13
+INSERT INTO produto (nome, marca, codigo, valor, quantidade_unidade, quantidade, id_super_mercado)
+VALUES ('Sabonete', 'Dove', 'SAB789', 2.99, 3, 90, 1);
+
+-- Insert 14
+INSERT INTO produto (nome, marca, codigo, valor, quantidade_unidade, quantidade, id_super_mercado)
+VALUES ('Papel Higiênico', 'Neve', 'PAH012', 5.99, 4, 40, 1);
+
+-- Insert 15
+INSERT INTO produto (nome, marca, codigo, valor, quantidade_unidade, quantidade, id_super_mercado)
+VALUES ('Shampoo', 'Pantene', 'SHA345', 7.99, 2, 50, 1);
+
+-- Insert 16
+INSERT INTO produto (nome, marca, codigo, valor, quantidade_unidade, quantidade, id_super_mercado)
+VALUES ('Desodorante', 'Rexona', 'DEO678', 3.49, 5, 70, 1);
+
+------------------------------------------------------------
+-- Inserts com id_lote NULL
+INSERT INTO controle_produto (id_lote, id_produto, data_vencimento)
+VALUES (NULL, 1, '2023-06-01');
+
+INSERT INTO controle_produto (id_lote, id_produto, data_vencimento)
+VALUES (NULL, 2, '2023-07-15');
+
+INSERT INTO controle_produto (id_lote, id_produto, data_vencimento)
+VALUES (NULL, 3, '2023-08-30');
+
+INSERT INTO controle_produto (id_lote, id_produto, data_vencimento)
+VALUES (NULL, 4, '2023-09-22');
+
+INSERT INTO controle_produto (id_lote, id_produto, data_vencimento)
+VALUES (NULL, 5, '2023-10-10');
+
+INSERT INTO controle_produto (id_lote, id_produto, data_vencimento)
+VALUES (NULL, 6, '2023-11-05');
+
+INSERT INTO controle_produto (id_lote, id_produto, data_vencimento)
+VALUES (NULL, 7, '2023-12-18');
+
+INSERT INTO controle_produto (id_lote, id_produto, data_vencimento)
+VALUES (NULL, 8, '2024-01-12');
+
+INSERT INTO controle_produto (id_lote, id_produto, data_vencimento)
+VALUES (NULL, 9, '2024-02-28');
+
+INSERT INTO controle_produto (id_lote, id_produto, data_vencimento)
+VALUES (NULL, 10, '2024-03-20');
+
+INSERT INTO controle_produto (id_lote, id_produto, data_vencimento)
+VALUES (NULL, 11, '2024-04-06');
+****************************************
+
+-- Inserts adicionais com id_lote definido
+
+INSERT INTO controle_produto (id_lote, id_produto, data_vencimento)
+VALUES (1, 12, '2024-05-15');
+atualizar_quantidade_produto();
+
+INSERT INTO controle_produto (id_lote, id_produto, data_vencimento)
+VALUES (2, 13, '2024-06-25');
+select atualizar_quantidade_produto();
+
+INSERT INTO controle_produto (id_lote, id_produto, data_vencimento)
+VALUES (3, 14, '2024-07-30');
+select atualizar_quantidade_produto();
+
+
+
+INSERT INTO controle_produto (id_lote, id_produto, data_vencimento)
+VALUES (4, 15, '2023-06-10');
+select atualizar_quantidade_produto();
+
+
+INSERT INTO controle_produto (id_lote, id_produto, data_vencimento)
+VALUES (5, 16, '2023-07-20');
+select atualizar_quantidade_produto();
+**************************************
+
+---------------------------------------------------------------------------------------------
+-- Inserts com apenas o nome preenchido
+INSERT INTO cliente (nome)
+VALUES ('João');
+
+INSERT INTO cliente (nome)
+VALUES ('Maria');
+
+INSERT INTO cliente (nome)
+VALUES ('Pedro');
+
+INSERT INTO cliente (nome)
+VALUES ('Ana');
+
+INSERT INTO cliente (nome)
+VALUES ('Lucas');
+
+-- Inserts adicionais com outros atributos preenchidos
+INSERT INTO cliente (nome, cpf)
+VALUES ('Carlos', '12345678901');
+
+INSERT INTO cliente (nome, cpf)
+VALUES ('Fernanda', '98765432109');
+
+INSERT INTO cliente (nome, data_nascimento)
+VALUES ('Mariana', '1990-05-15');
+
+INSERT INTO cliente (nome, data_nascimento)
+VALUES ('Rafael', '1985-09-10');
+
+-- Continue adicionando mais inserts com diferentes valores
+----------------------------------------------------------------------------
+INSERT INTO funcionario (nome, cpf, numero_carteira_trabalho, id_super_mercado)
+VALUES ('João Silva', '12345678901', 'CT123', 1);
+
+INSERT INTO funcionario (nome, cpf, numero_carteira_trabalho, id_super_mercado)
+VALUES ('Maria Santos', '98765432109', 'CT456', 1);
+
+INSERT INTO funcionario (nome, cpf, numero_carteira_trabalho, id_super_mercado)
+VALUES ('Pedro Oliveira', '45678912345', 'CT789', 1);
+
+INSERT INTO funcionario (nome, cpf, numero_carteira_trabalho, id_super_mercado)
+VALUES ('Ana Costa', '78912345678', 'CT012', 1);
+-------------------------------------------------------------------------------------
+INSERT INTO caixa (numero, id_super_mercado, tipo_caixa, status)
+VALUES ('1A', 1, 'preferencial', 1);
+
+INSERT INTO caixa (numero, id_super_mercado, tipo_caixa, status)
+VALUES ('2A', 1, 'caixa_rapido', 1);
+
+INSERT INTO caixa (numero, id_super_mercado, tipo_caixa, status)
+VALUES ('3A', 1, 'comum', 0);
+
+INSERT INTO caixa (numero, id_super_mercado, tipo_caixa, status)
+VALUES ('4A', 1, 'totem', 1);
+-----------------------------------------------------------------------------------
+INSERT INTO jornada (id_funcionario, id_caixa, horario_abertura, horario_fechamento, valor_inicial, valor_final)
+VALUES (1, 1, '2023-06-01 09:00:00', '2023-06-01 18:00:00', 100.00, 150.00);
+
+INSERT INTO jornada (id_funcionario, id_caixa, horario_abertura, horario_fechamento, valor_inicial, valor_final)
+VALUES (2, 2, '2023-06-02 08:30:00', '2023-06-02 17:30:00', 150.00, null);
+
+INSERT INTO jornada (id_funcionario, id_caixa, horario_abertura, horario_fechamento, valor_inicial, valor_final)
+VALUES (null, 4, '2023-06-03 10:00:00', '2023-06-03 19:00:00', 200.00, 300.00);
+
+INSERT INTO jornada (id_funcionario, id_caixa, horario_abertura, horario_fechamento, valor_inicial, valor_final)
+VALUES (3, 3, '2023-06-04 09:30:00', '2023-06-04 18:30:00', 180.00, null);
+
+-- Adicione mais inserts conforme necessário
+
+
+INSERT INTO jornada (id_funcionario, id_caixa, horario_abertura, horario_fechamento, valor_inicial, valor_final)
+VALUES (1, 5, '2023-06-05 08:00:00', '2023-06-05 17:00:00', 120.00, 180.00);
+
+INSERT INTO jornada (id_funcionario, id_caixa, horario_abertura, horario_fechamento, valor_inicial, valor_final)
+VALUES (2, 6, '2023-06-06 09:30:00', '2023-06-06 18:30:00', 200.00, null);
+
+INSERT INTO jornada (id_funcionario, id_caixa, horario_abertura, horario_fechamento, valor_inicial, valor_final)
+VALUES (3, 7, '2023-06-07 10:00:00', '2023-06-07 19:00:00', 150.00, 250.00);
+
+INSERT INTO jornada (id_funcionario, id_caixa, horario_abertura, horario_fechamento, valor_inicial, valor_final)
+VALUES (null, 4, '2023-06-08 08:30:00', '2023-06-08 17:30:00', 180.00, null);
+
+INSERT INTO jornada (id_funcionario, id_caixa, horario_abertura, horario_fechamento, valor_inicial, valor_final)
+VALUES (4, 9, '2023-06-09 09:00:00', '2023-06-09 18:00:00', 160.00, 220.00);
+
+INSERT INTO jornada (id_funcionario, id_caixa, horario_abertura, horario_fechamento, valor_inicial, valor_final)
+VALUES (1, 10, '2023-06-10 07:30:00', '2023-06-10 16:30:00', 140.00, null);
+
+INSERT INTO jornada (id_funcionario, id_caixa, horario_abertura, horario_fechamento, valor_inicial, valor_final)
+VALUES (2, 11, '2023-06-11 08:00:00', '2023-06-11 17:00:00', 200.00, 280.00);
+
+INSERT INTO jornada (id_funcionario, id_caixa, horario_abertura, horario_fechamento, valor_inicial, valor_final)
+VALUES (3, 12, '2023-06-12 09:30:00', '2023-06-12 18:30:00', 170.00, null);
+
+---------------------------------------------------------------------------------
+
+
+INSERT INTO plano_cartao (limite, tempo_de_pagamento, parcelas_maximas, descricao, id_super_mercado)
+VALUES (500.00, 30, 6, 'Plano Bronze', 1);
+
+INSERT INTO plano_cartao (limite, tempo_de_pagamento, parcelas_maximas, descricao, id_super_mercado)
+VALUES (1000.00, 60, 12, 'Plano Prata', 1);
+
+INSERT INTO plano_cartao (limite, tempo_de_pagamento, parcelas_maximas, descricao, id_super_mercado)
+VALUES (2000.00, 90, 24, 'Plano Ouro', 1);
+
+====================================================================================
+INSERT INTO cliente_cartao_super_mercado (numero, bandeira, id_plano_cartao, id_cliente)
+VALUES ('1234567890123456', 'mastercard', 1, 1);
+
+INSERT INTO cliente_cartao_super_mercado (numero, bandeira, id_plano_cartao, id_cliente)
+VALUES ('9876543210987654', 'cielo', 2, 2);
+
+INSERT INTO cliente_cartao_super_mercado (numero, bandeira, id_plano_cartao, id_cliente)
+VALUES ('5432167890123456', 'alelo', 3, 3);
+
+
+

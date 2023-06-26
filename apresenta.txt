@@ -1,0 +1,681 @@
+CREATE TABLE super_mercado (
+  id_super_mercado SERIAL PRIMARY KEY,
+  nome VARCHAR(45),
+  cnpj VARCHAR(45),
+  email VARCHAR(45)
+);
+
+
+CREATE TABLE IF NOT EXISTS endereco (
+id_endereco SERIAL PRIMARY KEY,
+rua VARCHAR(45),
+numero VARCHAR(45),
+cep INT,
+cidade VARCHAR(45),
+uf VARCHAR(45),
+id_super_mercado INT NOT NULL,
+CONSTRAINT fk_endereco_super_mercado1 
+FOREIGN KEY (id_super_mercado)
+REFERENCES super_mercado (id_super_mercado)
+);
+
+CREATE TABLE IF NOT EXISTS lote (
+  id_lote serial  PRIMARY KEY,
+  data_compra DATE NULL,
+  quantidade_recebida INT NULL
+);
+
+CREATE TABLE IF NOT EXISTS produto (
+  id_produto SERIAL PRIMARY KEY,
+  nome VARCHAR(45) NULL,
+  marca VARCHAR(45) NULL,
+  codigo VARCHAR(45) NULL,
+  valor DOUBLE PRECISION NULL,
+  quantidade_unidade INT NULL,
+  quantidade INT NULL,
+  id_super_mercado INT NOT NULL,
+  CONSTRAINT fk_produto_super_mercado1
+    FOREIGN KEY (id_super_mercado)
+    REFERENCES super_mercado (id_super_mercado)
+);
+
+CREATE TABLE IF NOT EXISTS controle_produto (
+  id_controle_produto SERIAL PRIMARY KEY,
+  id_lote INT NULL,
+  id_produto INT NOT NULL,
+  data_vencimento date null,
+
+  CONSTRAINT fk_controle_produto_lote1
+    FOREIGN KEY (id_lote)
+    REFERENCES lote (id_lote),
+  CONSTRAINT fk_controle_produto_produto1
+    FOREIGN KEY (id_produto)
+    REFERENCES produto (id_produto)
+);
+
+CREATE TABLE IF NOT EXISTS cliente (
+  id_cliente SERIAL PRIMARY KEY,
+  nome VARCHAR(45) NULL,
+  cpf VARCHAR(45) NULL,
+  data_nascimento DATE NULL
+);
+
+CREATE TABLE IF NOT EXISTS funcionario (
+  id_funcionario SERIAL NOT NULL,
+	nome varchar(45),
+  cpf VARCHAR(45) NULL,
+  numero_carteira_trabalho VARCHAR(45) NULL,
+  id_super_mercado INT NOT NULL,
+  PRIMARY KEY (id_funcionario),
+  CONSTRAINT fk_Funcionario_super_mercado1
+    FOREIGN KEY (id_super_mercado)
+    REFERENCES super_mercado (id_super_mercado)
+);
+
+CREATE TABLE IF NOT EXISTS caixa (
+  id_caixa SERIAL NOT NULL,
+  numero VARCHAR(45) NULL,
+  id_super_mercado INT NOT NULL,
+  tipo_caixa VARCHAR(45) NULL,
+  status SMALLINT NULL,
+  PRIMARY KEY (id_caixa),
+  CONSTRAINT fk_Caixa_super_mercado1
+    FOREIGN KEY (id_super_mercado)
+    REFERENCES super_mercado (id_super_mercado)
+);
+
+CREATE TABLE IF NOT EXISTS jornada (
+  id_jornada SERIAL NOT NULL,
+  id_funcionario INT  NULL,
+  id_caixa INT NOT NULL,
+  horario_abertura TIMESTAMP NULL,
+  horario_fechamento TIMESTAMP NULL,
+  valor_inicial decimal(11,2) ,
+  valor_final decimal(11,2) null ,
+  PRIMARY KEY (id_jornada),
+  CONSTRAINT fk_Funcionario_has_Caixa_Funcionario1
+  FOREIGN KEY (id_funcionario)
+  REFERENCES funcionario (id_funcionario),
+  CONSTRAINT fk_Funcionario_has_caixa_Caixa1
+  FOREIGN KEY (id_caixa)
+  REFERENCES caixa (id_caixa)
+);
+
+CREATE TABLE IF NOT EXISTS venda (
+  id_venda SERIAL NOT NULL,
+  id_cliente INT NULL,
+  id_jornada INT NOT NULL,
+  data_hora DATE NULL,
+  PRIMARY KEY (id_venda),
+  CONSTRAINT fk_compra_cliente1
+    FOREIGN KEY (id_cliente)
+    REFERENCES cliente (id_cliente),
+  CONSTRAINT fk_compra_jornada1
+    FOREIGN KEY (id_jornada)
+    REFERENCES jornada (id_jornada)
+);
+
+CREATE TABLE IF NOT EXISTS nota_fiscal (
+  id_nota_fiscal SERIAL NOT NULL,
+  cod_nota VARCHAR(45) NULL,
+  emissao DATE NULL,
+  cpf VARCHAR(45) NULL,
+  valor_total decimal(11,2),
+  id_venda INT NOT NULL,
+  id_jornada INT NOT NULL,
+  PRIMARY KEY (id_nota_fiscal),
+  CONSTRAINT fk_nota_fiscal_venda1
+    FOREIGN KEY (id_venda)
+    REFERENCES venda (id_venda),
+	FOREIGN KEY (id_jornada)
+    REFERENCES jornada (id_jornada)
+);
+
+
+CREATE TABLE IF NOT EXISTS plano_cartao (
+  id_plano_cartao SERIAL NOT NULL,
+  limite decimal (11,2),
+  tempo_de_pagamento INT NULL,
+  parcelas_maximas INT NULL,
+  descricao VARCHAR(45) NULL,
+  id_super_mercado INT NOT NULL,
+  PRIMARY KEY (id_plano_cartao),
+  CONSTRAINT fk_plano_cartao_super_mercado1
+    FOREIGN KEY (id_super_mercado)
+    REFERENCES super_mercado (id_super_mercado)
+);
+
+
+CREATE TABLE IF NOT EXISTS cliente_cartao_super_mercado (
+  id_cartao_super_mercado SERIAL NOT NULL,
+  numero CHAR(16) NULL,
+  bandeira VARCHAR(45) NULL,
+  id_plano_cartao INT NOT NULL,
+  id_cliente INT NOT NULL,
+  PRIMARY KEY (id_cartao_super_mercado),
+  CONSTRAINT fk_cliente_cartao_super_mercado_plano_cartao1
+    FOREIGN KEY (id_plano_cartao)
+    REFERENCES plano_cartao (id_plano_cartao),
+  CONSTRAINT fk_cliente_cartao_super_mercado_cliente1
+    FOREIGN KEY (id_cliente)
+    REFERENCES cliente (id_cliente)
+);
+
+
+CREATE TABLE IF NOT EXISTS pagamento (
+  id_pagamento SERIAL NOT NULL,
+  forma_pagamento VARCHAR(45) NULL,
+  valor_total decimal (10,2),
+  id_venda INT NOT NULL,
+  id_cartao_super_mercado INT,
+  PRIMARY KEY (id_pagamento),
+  CONSTRAINT fk_pagamento_compra1
+    FOREIGN KEY (id_venda)
+    REFERENCES venda (id_venda),
+  CONSTRAINT fk_pagamento_cartao_super_mercado1
+    FOREIGN KEY (id_cartao_super_mercado)
+    REFERENCES cliente_cartao_super_mercado (id_cartao_super_mercado)
+);
+
+
+CREATE TABLE IF NOT EXISTS itens_venda (
+  id_itens_venda SERIAL NOT NULL,
+  id_venda INT NOT NULL,
+  id_controle_produto INT NOT NULL,
+  PRIMARY KEY (id_itens_venda),
+  CONSTRAINT fk_venda_has_produto_venda1
+    FOREIGN KEY (id_venda)
+    REFERENCES venda (id_venda),
+  CONSTRAINT fk_itens_venda_controle_produto1
+    FOREIGN KEY (id_controle_produto)
+    REFERENCES controle_produto (id_controle_produto)
+);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE FUNCTION atualizar_quantidade_produto()
+RETURNS VOID AS
+$$
+BEGIN
+  UPDATE produto
+  SET quantidade = quantidade + (
+    SELECT quantidade_recebida
+    FROM lote
+    WHERE id_lote = (
+      SELECT id_lote
+      FROM controle_produto
+      ORDER BY id_controle_produto DESC
+      LIMIT 1
+    )
+  )
+  WHERE id_produto = (
+    SELECT id_produto
+    FROM controle_produto
+    ORDER BY id_controle_produto DESC
+    LIMIT 1
+  );
+END;
+$$
+LANGUAGE PLpgSQL;
+
+CREATE INDEX indice_codigo ON produto (codigo);
+
+CREATE INDEX lote_produto ON lote (data_compra);
+
+CREATE or replace VIEW  marcas_mais_vendidas AS
+SELECT p.marca, COUNT(*) AS quantidade,p.id_super_mercado
+FROM super_mercado as m join produto as p on m.id_super_mercado = p.id_super_mercado  join   controle_produto as c on  c.id_produto = p.id_produto join 
+itens_venda as i on i.id_controle_produto = c.id_controle_produto
+GROUP BY p.marca,p.id_super_mercado
+ORDER BY quantidade DESC
+LIMIT 3;
+select marca,quantidade from marcas_mais_vendidas where id_super_mercado= 1;
+
+
+CREATE OR REPLACE FUNCTION DESTRUIR_CAIXA(id integer, quantidade_caixas integer)
+RETURNS INTEGER AS
+$$
+DECLARE
+    quantidade int;
+BEGIN
+
+    select quantidade_unidade into quantidade from produto where id_produto = id;
+    RETURN quantidade * quantidade_caixas;
+END; 
+$$
+LANGUAGE PLPGSQL;
+select DESTRUIR_CAIXA(11,2);
+select * from produto where id_super_mercado = 1;
+
+
+CREATE OR REPLACE PROCEDURE procedure_abrir_caixa(id INTEGER, id_quantidade_caixas INTEGER,
+												  produto_atualizar INTEGER)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+	existe_produto INT;
+	variavel INT;
+	resultado_function INT;
+
+BEGIN
+	-- Chamada da função DESTRUIR_CAIXA
+	SELECT DESTRUIR_CAIXA(id, id_quantidade_caixas) INTO resultado_function;
+
+	select quantidade_unidade * quantidade into existe_produto from produto where id_produto = id;
+	  
+
+	-- Atualizações dos produtos
+	UPDATE produto SET quantidade = quantidade + resultado_function WHERE id_produto = produto_atualizar;
+	UPDATE produto SET quantidade = quantidade - id_quantidade_caixas WHERE id_produto = id;
+	RAISE NOTICE'%', resultado_function;
+	 RAISE NOTICE '%',existe_produto;
+	
+
+	IF resultado_function > existe_produto THEN
+	
+		RAISE EXCEPTION 'Erro ao atualizar o produto ' ;
+		ROLLBACK;
+	ELSE
+		COMMIT;
+	END IF;
+END;
+$$;
+
+
+
+	
+CREATE OR REPLACE FUNCTION gerar_nota(id integer)
+RETURNS void AS
+$$
+BEGIN
+
+INSERT INTO nota_fiscal (cod_nota, emissao, cpf, valor_total, id_venda, id_jornada)
+VALUES (random(), NOW(), null,
+(select sum(valor) 
+from  controle_produto as c join 
+produto as p on  c.id_produto = p.id_produto join 
+itens_venda as i on i.id_controle_produto = c.id_controle_produto join
+ venda   on venda.id_venda = i.id_venda 
+ where venda.id_venda = id),
+id, (select id_jornada from venda  where venda.id_venda = id));
+END; 
+$$
+LANGUAGE PLPGSQL;
+
+
+CREATE OR REPLACE PROCEDURE verificar_venda(parametro_id_venda INT)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    variavel RECORD;
+    valor_pago DECIMAL(11,2);
+    total DECIMAL(11,2);
+BEGIN
+    -- Obter o valor total pago
+    SELECT valor_total INTO valor_pago FROM pagamento where id_venda = parametro_id_venda;
+
+    -- Obter o valor total dos produtos vendidos na venda
+    SELECT SUM(p.valor) INTO total
+    FROM controle_produto AS c
+    JOIN produto AS p ON c.id_produto = p.id_produto
+    JOIN itens_venda AS i ON i.id_controle_produto = c.id_controle_produto
+    WHERE i.id_venda = parametro_id_venda;
+
+    -- Atualizar a quantidade de produtos vendidos e verificar o valor pago
+    FOR variavel IN
+        SELECT c.id_produto
+        FROM venda AS v
+        JOIN itens_venda AS i ON v.id_venda = i.id_venda
+        JOIN controle_produto AS c ON i.id_controle_produto = c.id_controle_produto
+        WHERE v.id_venda = parametro_id_venda
+    LOOP
+        UPDATE produto
+        SET quantidade = quantidade - 1
+        WHERE id_produto = variavel.id_produto;
+
+        RAISE NOTICE 'ID do produto: %', variavel.id_produto;
+    END LOOP;
+
+ 
+    IF valor_pago < total THEN
+        RAISE EXCEPTION 'Valor insuficiente. Você pagou %. É necessário pagar %.', valor_pago, total;
+        ROLLBACK;
+    ELSE
+	perform gerar_nota(parametro_id_venda);
+        COMMIT;
+		
+    END IF;
+
+END;
+$$;
+	
+CREATE OR REPLACE FUNCTION fechamento(id_da_jornada integer)
+RETURNS void AS
+$$
+DECLARE
+    fechamento_jornada decimal(11,2);
+BEGIN
+ SELECT SUM(p.valor) into fechamento_jornada
+    FROM controle_produto AS c
+    JOIN produto AS p ON c.id_produto = p.id_produto
+    JOIN itens_venda AS i ON i.id_controle_produto = c.id_controle_produto join venda as v on v.id_venda = i.id_venda
+    WHERE v.id_jornada = id_da_jornada;
+	update jornada set valor_final = fechamento_jornada where id_jornada = id_da_jornada;
+END; 
+$$
+LANGUAGE PLPGSQL;
+
+select * from super_mercado;
+select * from lote;
+select * from produto;
+select * from plano_cartao;
+select * from funcionario;
+select * from cliente_cartao_super_mercado; 
+select * from jornada;
+select * from caixa;
+select * from venda;
+select * from produto order by id_produto asc;
+select * from itens_venda;
+select * from pagamento;
+select * from controle_produto;
+select * from nota_fiscal;
+select * from endereco;
+
+select v.*,i.*,c.* from controle_produto as c join itens_venda as i on c.id_controle_produto = 
+i.id_controle_produto join venda as v on v.id_venda = i.id_venda; 
+
+select * from super_mercado;
+
+
+INSERT INTO super_mercado (nome, cnpj, email)
+VALUES ('Supermercado A', '123456789', 'supermercadoa@example.com');
+
+
+INSERT INTO endereco (rua, numero, cep, cidade, uf, id_super_mercado)
+VALUES ('Rua Exemplo', '123', 12345, 'SOROCABA', 'SP', 1);
+
+
+-- Insert 1
+INSERT INTO lote (data_compra, quantidade_recebida)
+VALUES ('2023-01-01', 150);
+
+-- Insert 2
+INSERT INTO lote (data_compra, quantidade_recebida)
+VALUES ('2023-02-05', 200);
+
+
+
+-- Insert 3
+INSERT INTO lote (data_compra, quantidade_recebida)
+VALUES ('2023-03-10', 250);
+
+-- Insert 4
+INSERT INTO lote (data_compra, quantidade_recebida)
+VALUES ('2023-04-15', 180);
+
+-- Insert 5
+INSERT INTO lote (data_compra, quantidade_recebida)
+VALUES ('2023-05-20', 220);
+
+INSERT INTO produto (nome, marca, codigo, valor, quantidade_unidade, quantidade, id_super_mercado)
+VALUES ('Arroz', 'Tio João', 'ARZ123', 10.99, 1, 50, 1);
+
+-- Insert 2
+INSERT INTO produto (nome, marca, codigo, valor, quantidade_unidade, quantidade, id_super_mercado)
+VALUES ('Feijão', 'Camil', 'FEI456', 5.99, 1, 40, 1);
+
+-- Insert 3
+INSERT INTO produto (nome, marca, codigo, valor, quantidade_unidade, quantidade, id_super_mercado)
+VALUES ('Macarrão', 'Piraquê', 'MAC789', 3.99, 1, 60, 1);
+
+-- Insert 4
+INSERT INTO produto (nome, marca, codigo, valor, quantidade_unidade, quantidade, id_super_mercado)
+VALUES ('Leite', 'Nestlé', 'LEI234', 2.99, 1, 35, 1);
+
+-- Insert 5
+INSERT INTO produto (nome, marca, codigo, valor, quantidade_unidade, quantidade, id_super_mercado)
+VALUES ('Biscoito', 'Oreo', 'BIS567', 4.49, 1, 45, 1);
+
+-- Insert 6
+INSERT INTO produto (nome, marca, codigo, valor, quantidade_unidade, quantidade, id_super_mercado)
+VALUES ('Iogurte', 'Danone', 'IOG890', 1.99, 1, 55, 1);
+
+-- Insert 7
+INSERT INTO produto (nome, marca, codigo, valor, quantidade_unidade, quantidade, id_super_mercado)
+VALUES ('Azeite', 'Borges', 'AZE123', 7.99, 1, 30, 1);
+
+-- Insert 8
+INSERT INTO produto (nome, marca, codigo, valor, quantidade_unidade, quantidade, id_super_mercado)
+VALUES ('Café', '3 Corações', 'CAF456', 8.49, 1, 70, 1);
+
+-- Insert 9
+INSERT INTO produto (nome, marca, codigo, valor, quantidade_unidade, quantidade, id_super_mercado)
+VALUES ('Açúcar', 'União', 'ACU789', 3.49, 1, 50, 1);
+
+-- Insert 10
+INSERT INTO produto (nome, marca, codigo, valor, quantidade_unidade, quantidade, id_super_mercado)
+VALUES ('Molho de Tomate', 'Quero', 'MOL012', 2.79, 1, 40, 1);
+
+-- Insert 11
+INSERT INTO produto (nome, marca, codigo, valor, quantidade_unidade, quantidade, id_super_mercado)
+VALUES ('Cerveja', 'Skol', 'CER123', 3.99, 12, 120, 1);
+
+-- Insert 12
+INSERT INTO produto (nome, marca, codigo, valor, quantidade_unidade, quantidade, id_super_mercado)
+VALUES ('Refrigerante', 'Coca-Cola', 'REF456', 4.49, 6, 60, 1);
+
+-- Insert 13
+INSERT INTO produto (nome, marca, codigo, valor, quantidade_unidade, quantidade, id_super_mercado)
+VALUES ('Sabonete', 'Dove', 'SAB789', 2.99, 3, 90, 1);
+
+-- Insert 14
+INSERT INTO produto (nome, marca, codigo, valor, quantidade_unidade, quantidade, id_super_mercado)
+VALUES ('Papel Higiênico', 'Neve', 'PAH012', 5.99, 4, 40, 1);
+
+-- Insert 15
+INSERT INTO produto (nome, marca, codigo, valor, quantidade_unidade, quantidade, id_super_mercado)
+VALUES ('Shampoo', 'Pantene', 'SHA345', 7.99, 2, 50, 1);
+
+-- Insert 16
+INSERT INTO produto (nome, marca, codigo, valor, quantidade_unidade, quantidade, id_super_mercado)
+VALUES ('Desodorante', 'Rexona', 'DEO678', 3.49, 5, 70, 1);
+
+INSERT INTO controle_produto (id_lote, id_produto, data_vencimento)
+VALUES (NULL, 1, '2023-06-01');
+
+INSERT INTO controle_produto (id_lote, id_produto, data_vencimento)
+VALUES (NULL, 2, '2023-07-15');
+
+INSERT INTO controle_produto (id_lote, id_produto, data_vencimento)
+VALUES (NULL, 3, '2023-08-30');
+
+INSERT INTO controle_produto (id_lote, id_produto, data_vencimento)
+VALUES (NULL, 4, '2023-09-22');
+
+INSERT INTO controle_produto (id_lote, id_produto, data_vencimento)
+VALUES (NULL, 5, '2023-10-10');
+
+INSERT INTO controle_produto (id_lote, id_produto, data_vencimento)
+VALUES (NULL, 6, '2023-11-05');
+
+INSERT INTO controle_produto (id_lote, id_produto, data_vencimento)
+VALUES (NULL, 7, '2023-12-18');
+
+INSERT INTO controle_produto (id_lote, id_produto, data_vencimento)
+VALUES (NULL, 8, '2024-01-12');
+
+INSERT INTO controle_produto (id_lote, id_produto, data_vencimento)
+VALUES (NULL, 9, '2024-02-28');
+
+INSERT INTO controle_produto (id_lote, id_produto, data_vencimento)
+VALUES (NULL, 10, '2024-03-20');
+
+INSERT INTO controle_produto (id_lote, id_produto, data_vencimento)
+VALUES (NULL, 11, '2024-04-06');
+
+INSERT INTO controle_produto (id_lote, id_produto, data_vencimento)
+VALUES (1, 12, '2024-05-15');
+select atualizar_quantidade_produto();
+
+INSERT INTO controle_produto (id_lote, id_produto, data_vencimento)
+VALUES (2, 13, '2024-06-25');
+select atualizar_quantidade_produto();
+
+INSERT INTO controle_produto (id_lote, id_produto, data_vencimento)
+VALUES (3, 14, '2024-07-30');
+select atualizar_quantidade_produto();
+
+
+
+INSERT INTO controle_produto (id_lote, id_produto, data_vencimento)
+VALUES (4, 15, '2023-06-10');
+select atualizar_quantidade_produto();
+
+
+INSERT INTO controle_produto (id_lote, id_produto, data_vencimento)
+VALUES (5, 16, '2023-07-20');
+select atualizar_quantidade_produto();
+
+INSERT INTO cliente (nome)
+VALUES ('João');
+
+INSERT INTO cliente (nome)
+VALUES ('Maria');
+
+INSERT INTO cliente (nome)
+VALUES ('Pedro');
+
+INSERT INTO cliente (nome)
+VALUES ('Ana');
+
+INSERT INTO cliente (nome)
+VALUES ('Lucas');
+
+-- Inserts adicionais com outros atributos preenchidos
+INSERT INTO cliente (nome, cpf)
+VALUES ('Carlos', '12345678901');
+
+INSERT INTO cliente (nome, cpf)
+VALUES ('Fernanda', '98765432109');
+
+INSERT INTO cliente (nome, data_nascimento)
+VALUES ('Mariana', '1990-05-15');
+
+INSERT INTO cliente (nome, data_nascimento)
+VALUES ('Rafael', '1985-09-10');
+
+INSERT INTO funcionario (nome, cpf, numero_carteira_trabalho, id_super_mercado)
+VALUES ('Joao Silva', '12345678901', 'CT123', 1);
+
+INSERT INTO funcionario (nome, cpf, numero_carteira_trabalho, id_super_mercado)
+VALUES ('Maria Santos', '98765432109', 'CT456', 1);
+
+INSERT INTO funcionario (nome, cpf, numero_carteira_trabalho, id_super_mercado)
+VALUES ('Pedro Oliveira', '45678912345', 'CT789', 1);
+
+INSERT INTO funcionario (nome, cpf, numero_carteira_trabalho, id_super_mercado)
+VALUES ('Ana Costa', '78912345678', 'CT012', 1);
+
+INSERT INTO caixa (numero, id_super_mercado, tipo_caixa, status)
+VALUES ('1A', 1, 'preferencial', 1);
+
+INSERT INTO caixa (numero, id_super_mercado, tipo_caixa, status)
+VALUES ('2A', 1, 'caixa_rapido', 0);
+
+INSERT INTO caixa (numero, id_super_mercado, tipo_caixa, status)
+VALUES ('3A', 1, 'comum', 1);
+
+INSERT INTO caixa (numero, id_super_mercado, tipo_caixa, status)
+VALUES ('4A', 1, 'totem', 1);
+------------------------------------
+INSERT INTO jornada (id_funcionario, id_caixa, horario_abertura, horario_fechamento, valor_inicial, valor_final)
+VALUES (1, 1, '2023-06-01 09:00:00', '2023-06-01 18:00:00', 100.00, 150.00);
+
+INSERT INTO jornada (id_funcionario, id_caixa, horario_abertura, horario_fechamento, valor_inicial, valor_final)
+VALUES (2, 2, '2023-06-02 08:30:00', '2023-06-02 17:30:00', 150.00, null);
+
+INSERT INTO jornada (id_funcionario, id_caixa, horario_abertura, horario_fechamento, valor_inicial, valor_final)
+VALUES (null, 4, '2023-06-03 10:00:00', '2023-06-03 19:00:00', 200.00, 300.00);
+
+INSERT INTO jornada (id_funcionario, id_caixa, horario_abertura, horario_fechamento, valor_inicial, valor_final)
+VALUES (3, 3, '2023-06-04 09:30:00', '2023-06-04 18:30:00', 180.00, null);
+
+INSERT INTO plano_cartao (limite, tempo_de_pagamento, parcelas_maximas, descricao, id_super_mercado)
+VALUES (500.00, 30, 6, 'Plano Bronze', 1);
+
+INSERT INTO plano_cartao (limite, tempo_de_pagamento, parcelas_maximas, descricao, id_super_mercado)
+VALUES (1000.00, 60, 12, 'Plano Prata', 1);
+
+INSERT INTO plano_cartao (limite, tempo_de_pagamento, parcelas_maximas, descricao, id_super_mercado)
+VALUES (2000.00, 90, 24, 'Plano Ouro', 1);
+
+INSERT INTO venda (id_cliente, id_jornada, data_hora)
+VALUES (2, 1, CURRENT_DATE);
+
+INSERT INTO itens_venda (id_venda, id_controle_produto)
+VALUES (1, 1);
+
+INSERT INTO itens_venda (id_venda, id_controle_produto)
+VALUES (1, 2);
+
+INSERT INTO itens_venda (id_venda, id_controle_produto)
+VALUES (1, 3);
+
+INSERT INTO itens_venda (id_venda, id_controle_produto)
+VALUES (1, 4);
+
+INSERT INTO itens_venda (id_venda, id_controle_produto)
+VALUES (1, 5);
+
+INSERT INTO itens_venda (id_venda, id_controle_produto)
+VALUES (1, 6);
+
+INSERT INTO itens_venda (id_venda, id_controle_produto)
+VALUES (1, 7);
+
+INSERT INTO itens_venda (id_venda, id_controle_produto)
+VALUES (1, 8);
+
+INSERT INTO pagamento (forma_pagamento, valor_total, id_venda, id_cartao_super_mercado)
+VALUES ('Cartão de debito', 47.00, 1, NULL);
+
+
+call verificar_venda(1);
+
+
+ SELECT SUM(p.valor)
+    FROM controle_produto AS c
+    JOIN produto AS p ON c.id_produto = p.id_produto
+    JOIN itens_venda AS i ON i.id_controle_produto = c.id_controle_produto join venda as v on v.id_venda = i.id_venda
+    WHERE v.id_jornada = 1;
+	
+
+
+select * from jornada;
+
+select fechamento(1);
+
+
+select * from marcas_mais_vendidas;
+
+
+
+
+
+
+
+
+
+
+

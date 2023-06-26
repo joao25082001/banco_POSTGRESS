@@ -1,0 +1,402 @@
+CREATE TABLE super_mercado (
+  id_super_mercado SERIAL PRIMARY KEY,
+  nome VARCHAR(45),
+  cnpj VARCHAR(45),
+  email VARCHAR(45)
+);
+
+
+CREATE TABLE IF NOT EXISTS endereco (
+id_endereco SERIAL PRIMARY KEY,
+rua VARCHAR(45),
+numero VARCHAR(45),
+cep INT,
+cidade VARCHAR(45),
+uf VARCHAR(45),
+id_super_mercado INT NOT NULL,
+CONSTRAINT fk_endereco_super_mercado1 
+FOREIGN KEY (id_super_mercado)
+REFERENCES super_mercado (id_super_mercado)
+);
+
+CREATE TABLE IF NOT EXISTS lote (
+  id_lote serial  PRIMARY KEY,
+  data_compra DATE NULL,
+  quantidade_recebida INT NULL
+);
+
+CREATE TABLE IF NOT EXISTS produto (
+  id_produto SERIAL PRIMARY KEY,
+  tipo VARCHAR(45) NULL,
+  marca VARCHAR(45) NULL,
+  codigo VARCHAR(45) NULL,
+  valor DOUBLE PRECISION NULL,
+  quantidade_unidade INT NULL,
+  quantidade INT NULL,
+  id_super_mercado INT NOT NULL,
+  CONSTRAINT fk_produto_super_mercado1
+    FOREIGN KEY (id_super_mercado)
+    REFERENCES super_mercado (id_super_mercado)
+);
+
+CREATE TABLE IF NOT EXISTS controle_produto (
+  id_controle_produto SERIAL PRIMARY KEY,
+  id_lote INT NOT NULL,
+  id_produto INT NOT NULL,
+  CONSTRAINT fk_controle_produto_lote1
+    FOREIGN KEY (id_lote)
+    REFERENCES lote (id_lote),
+  CONSTRAINT fk_controle_produto_produto1
+    FOREIGN KEY (id_produto)
+    REFERENCES produto (id_produto)
+);
+
+CREATE TABLE IF NOT EXISTS cliente (
+  id_cliente SERIAL PRIMARY KEY,
+  nome VARCHAR(45) NULL,
+  cpf VARCHAR(45) NULL,
+  data_nascimento DATE NULL
+);
+
+CREATE TABLE IF NOT EXISTS funcionario (
+  id_funcionario SERIAL NOT NULL,
+  cpf VARCHAR(45) NULL,
+  numero_carteira_trabalho VARCHAR(45) NULL,
+  id_super_mercado INT NOT NULL,
+  PRIMARY KEY (id_funcionario),
+  CONSTRAINT fk_Funcionario_super_mercado1
+    FOREIGN KEY (id_super_mercado)
+    REFERENCES super_mercado (id_super_mercado)
+);
+
+CREATE TABLE IF NOT EXISTS caixa (
+  id_caixa SERIAL NOT NULL,
+  numero VARCHAR(45) NULL,
+  super_mercado_id_super_mercado INT NOT NULL,
+  tipo_caixa VARCHAR(45) NULL,
+  status SMALLINT NULL,
+  PRIMARY KEY (id_caixa),
+  CONSTRAINT fk_Caixa_super_mercado1
+    FOREIGN KEY (super_mercado_id_super_mercado)
+    REFERENCES super_mercado (id_super_mercado)
+);
+
+CREATE TABLE IF NOT EXISTS jornada (
+  id_jornada SERIAL NOT NULL,
+  id_funcionario INT NOT NULL,
+  id_caixa INT NOT NULL,
+  horario_abertura TIMESTAMP NULL,
+  horario_fechamento TIMESTAMP NULL,
+  valor_inicial decimal(11,2) ,
+  valor_final decimal(11,2) ,
+  PRIMARY KEY (id_jornada),
+  CONSTRAINT fk_Funcionario_has_Caixa_Funcionario1
+  FOREIGN KEY (id_funcionario)
+  REFERENCES funcionario (id_funcionario),
+  CONSTRAINT fk_Funcionario_has_caixa_Caixa1
+  FOREIGN KEY (id_caixa)
+  REFERENCES caixa (id_caixa)
+);
+
+CREATE TABLE IF NOT EXISTS venda (
+  id_venda SERIAL NOT NULL,
+  id_cliente INT NOT NULL,
+  id_jornada INT NOT NULL,
+  data_hora DATE NULL,
+  PRIMARY KEY (id_venda),
+  CONSTRAINT fk_compra_cliente1
+    FOREIGN KEY (id_cliente)
+    REFERENCES cliente (id_cliente),
+  CONSTRAINT fk_compra_jornada1
+    FOREIGN KEY (id_jornada)
+    REFERENCES jornada (id_jornada)
+);
+
+CREATE TABLE IF NOT EXISTS nota_fiscal (
+  id_nota_fiscal SERIAL NOT NULL,
+  cod_nota VARCHAR(45) NULL,
+  emissao DATE NULL,
+  cpf VARCHAR(45) NULL,
+  valor_total decimal(11,2),
+  id_venda INT NOT NULL,
+  id_jornada INT NOT NULL,
+  PRIMARY KEY (id_nota_fiscal),
+  CONSTRAINT fk_nota_fiscal_venda1
+    FOREIGN KEY (id_venda)
+    REFERENCES venda (id_venda),
+	FOREIGN KEY (id_jornada)
+    REFERENCES jornada (id_jornada)
+);
+
+
+CREATE TABLE IF NOT EXISTS plano_cartao (
+  id_plano_cartao SERIAL NOT NULL,
+  limite decimal (11,2),
+  tempo_de_pagamento INT NULL,
+  parcelas_maximas INT NULL,
+  descricao VARCHAR(45) NULL,
+  id_super_mercado INT NOT NULL,
+  PRIMARY KEY (id_plano_cartao),
+  CONSTRAINT fk_plano_cartao_super_mercado1
+    FOREIGN KEY (id_super_mercado)
+    REFERENCES super_mercado (id_super_mercado)
+);
+
+
+CREATE TABLE IF NOT EXISTS cliente_cartao_super_mercado (
+  id_cartao_super_mercado SERIAL NOT NULL,
+  numero CHAR(16) NULL,
+  bandeira VARCHAR(45) NULL,
+  id_plano_cartao INT NOT NULL,
+  id_cliente INT NOT NULL,
+  PRIMARY KEY (id_cartao_super_mercado),
+  CONSTRAINT fk_cliente_cartao_super_mercado_plano_cartao1
+    FOREIGN KEY (id_plano_cartao)
+    REFERENCES plano_cartao (id_plano_cartao),
+  CONSTRAINT fk_cliente_cartao_super_mercado_cliente1
+    FOREIGN KEY (id_cliente)
+    REFERENCES cliente (id_cliente)
+);
+
+
+CREATE TABLE IF NOT EXISTS pagamento (
+  id_pagamento SERIAL NOT NULL,
+  forma_pagamento VARCHAR(45) NULL,
+  valor_total decimal (10,2),
+  id_compra INT NOT NULL,
+  id_cartao_super_mercado INT,
+  PRIMARY KEY (id_pagamento),
+  CONSTRAINT fk_pagamento_compra1
+    FOREIGN KEY (id_compra)
+    REFERENCES venda (id_venda),
+  CONSTRAINT fk_pagamento_cartao_super_mercado1
+    FOREIGN KEY (id_cartao_super_mercado)
+    REFERENCES cliente_cartao_super_mercado (id_cartao_super_mercado)
+);
+
+
+CREATE TABLE IF NOT EXISTS itens_venda (
+  id_itens_venda SERIAL NOT NULL,
+  id_venda INT NOT NULL,
+  id_controle_produto INT NOT NULL,
+  PRIMARY KEY (id_itens_venda),
+  CONSTRAINT fk_venda_has_produto_venda1
+    FOREIGN KEY (id_venda)
+    REFERENCES venda (id_venda),
+  CONSTRAINT fk_itens_venda_controle_produto1
+    FOREIGN KEY (id_controle_produto)
+    REFERENCES controle_produto (id_controle_produto)
+);
+------------------------------------------------------------------------
+
+VERSAO 2
+
+
+
+
+
+CREATE TABLE super_mercado (
+  id_super_mercado SERIAL PRIMARY KEY,
+  nome VARCHAR(45),
+  cnpj VARCHAR(45),
+  email VARCHAR(45)
+);
+
+
+CREATE TABLE IF NOT EXISTS endereco (
+id_endereco SERIAL PRIMARY KEY,
+rua VARCHAR(45),
+numero VARCHAR(45),
+cep INT,
+cidade VARCHAR(45),
+uf VARCHAR(45),
+id_super_mercado INT NOT NULL,
+CONSTRAINT fk_endereco_super_mercado1 
+FOREIGN KEY (id_super_mercado)
+REFERENCES super_mercado (id_super_mercado)
+);
+
+CREATE TABLE IF NOT EXISTS lote (
+  id_lote serial  PRIMARY KEY,
+  data_compra DATE NULL,
+  quantidade_recebida INT NULL
+);
+
+CREATE TABLE IF NOT EXISTS produto (
+  id_produto SERIAL PRIMARY KEY,
+  nome VARCHAR(45) NULL,
+  marca VARCHAR(45) NULL,
+  codigo VARCHAR(45) NULL,
+  valor DOUBLE PRECISION NULL,
+  quantidade_unidade INT NULL,
+  quantidade INT NULL,
+  id_super_mercado INT NOT NULL,
+  CONSTRAINT fk_produto_super_mercado1
+    FOREIGN KEY (id_super_mercado)
+    REFERENCES super_mercado (id_super_mercado)
+);
+
+CREATE TABLE IF NOT EXISTS controle_produto (
+  id_controle_produto SERIAL PRIMARY KEY,
+  id_lote INT NULL,
+  id_produto INT NOT NULL,
+  data_vencimento date null,
+
+  CONSTRAINT fk_controle_produto_lote1
+    FOREIGN KEY (id_lote)
+    REFERENCES lote (id_lote),
+  CONSTRAINT fk_controle_produto_produto1
+    FOREIGN KEY (id_produto)
+    REFERENCES produto (id_produto)
+);
+
+CREATE TABLE IF NOT EXISTS cliente (
+  id_cliente SERIAL PRIMARY KEY,
+  nome VARCHAR(45) NULL,
+  cpf VARCHAR(45) NULL,
+  data_nascimento DATE NULL
+);
+
+CREATE TABLE IF NOT EXISTS funcionario (
+  id_funcionario SERIAL NOT NULL,
+	nome varchar(45),
+  cpf VARCHAR(45) NULL,
+  numero_carteira_trabalho VARCHAR(45) NULL,
+  id_super_mercado INT NOT NULL,
+  PRIMARY KEY (id_funcionario),
+  CONSTRAINT fk_Funcionario_super_mercado1
+    FOREIGN KEY (id_super_mercado)
+    REFERENCES super_mercado (id_super_mercado)
+);
+
+CREATE TABLE IF NOT EXISTS caixa (
+  id_caixa SERIAL NOT NULL,
+  numero VARCHAR(45) NULL,
+  id_super_mercado INT NOT NULL,
+  tipo_caixa VARCHAR(45) NULL,
+  status SMALLINT NULL,
+  PRIMARY KEY (id_caixa),
+  CONSTRAINT fk_Caixa_super_mercado1
+    FOREIGN KEY (id_super_mercado)
+    REFERENCES super_mercado (id_super_mercado)
+);
+
+CREATE TABLE IF NOT EXISTS jornada (
+  id_jornada SERIAL NOT NULL,
+  id_funcionario INT NULL,
+  id_caixa INT NOT NULL,
+  horario_abertura TIMESTAMP NULL,
+  horario_fechamento TIMESTAMP NULL,
+  valor_inicial decimal(11,2) ,
+  valor_final decimal(11,2) null ,
+  PRIMARY KEY (id_jornada),
+  CONSTRAINT fk_Funcionario_has_Caixa_Funcionario1
+  FOREIGN KEY (id_funcionario)
+  REFERENCES funcionario (id_funcionario),
+  CONSTRAINT fk_Funcionario_has_caixa_Caixa1
+  FOREIGN KEY (id_caixa)
+  REFERENCES caixa (id_caixa)
+);
+
+CREATE TABLE IF NOT EXISTS venda (
+  id_venda SERIAL NOT NULL,
+  id_cliente INT NULL,
+  id_jornada INT NOT NULL,
+  data_hora DATE NULL,
+  PRIMARY KEY (id_venda),
+  CONSTRAINT fk_compra_cliente1
+    FOREIGN KEY (id_cliente)
+    REFERENCES cliente (id_cliente),
+  CONSTRAINT fk_compra_jornada1
+    FOREIGN KEY (id_jornada)
+    REFERENCES jornada (id_jornada)
+);
+
+CREATE TABLE IF NOT EXISTS nota_fiscal (
+  id_nota_fiscal SERIAL NOT NULL,
+  cod_nota VARCHAR(45) NULL,
+  emissao DATE NULL,
+  cpf VARCHAR(45) NULL,
+  valor_total decimal(11,2),
+  id_venda INT NOT NULL,
+  id_jornada INT NOT NULL,
+  PRIMARY KEY (id_nota_fiscal),
+  CONSTRAINT fk_nota_fiscal_venda1
+    FOREIGN KEY (id_venda)
+    REFERENCES venda (id_venda),
+	FOREIGN KEY (id_jornada)
+    REFERENCES jornada (id_jornada)
+);
+
+
+CREATE TABLE IF NOT EXISTS plano_cartao (
+  id_plano_cartao SERIAL NOT NULL,
+  limite decimal (11,2),
+  tempo_de_pagamento INT NULL,
+  parcelas_maximas INT NULL,
+  descricao VARCHAR(45) NULL,
+  id_super_mercado INT NOT NULL,
+  PRIMARY KEY (id_plano_cartao),
+  CONSTRAINT fk_plano_cartao_super_mercado1
+    FOREIGN KEY (id_super_mercado)
+    REFERENCES super_mercado (id_super_mercado)
+);
+
+
+CREATE TABLE IF NOT EXISTS cliente_cartao_super_mercado (
+  id_cartao_super_mercado SERIAL NOT NULL,
+  numero CHAR(16) NULL,
+  bandeira VARCHAR(45) NULL,
+  id_plano_cartao INT NOT NULL,
+  id_cliente INT NOT NULL,
+  PRIMARY KEY (id_cartao_super_mercado),
+  CONSTRAINT fk_cliente_cartao_super_mercado_plano_cartao1
+    FOREIGN KEY (id_plano_cartao)
+    REFERENCES plano_cartao (id_plano_cartao),
+  CONSTRAINT fk_cliente_cartao_super_mercado_cliente1
+    FOREIGN KEY (id_cliente)
+    REFERENCES cliente (id_cliente)
+);
+
+
+CREATE TABLE IF NOT EXISTS pagamento (
+  id_pagamento SERIAL NOT NULL,
+  forma_pagamento VARCHAR(45) NULL,
+  valor_total decimal (10,2),
+  id_venda INT NOT NULL,
+  id_cartao_super_mercado INT,
+  PRIMARY KEY (id_pagamento),
+  CONSTRAINT fk_pagamento_compra1
+    FOREIGN KEY (id_venda)
+    REFERENCES venda (id_venda),
+  CONSTRAINT fk_pagamento_cartao_super_mercado1
+    FOREIGN KEY (id_cartao_super_mercado)
+    REFERENCES cliente_cartao_super_mercado (id_cartao_super_mercado)
+);
+
+
+CREATE TABLE IF NOT EXISTS itens_venda (
+  id_itens_venda SERIAL NOT NULL,
+  id_venda INT NOT NULL,
+  id_controle_produto INT NOT NULL,
+  PRIMARY KEY (id_itens_venda),
+  CONSTRAINT fk_venda_has_produto_venda1
+    FOREIGN KEY (id_venda)
+    REFERENCES venda (id_venda),
+  CONSTRAINT fk_itens_venda_controle_produto1
+    FOREIGN KEY (id_controle_produto)
+    REFERENCES controle_produto (id_controle_produto)
+);
+
+
+
+
+
+
+
+
+
+
+
+
+
